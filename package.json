@@ -1,0 +1,24 @@
+{
+  "name": "sf-login-tester",
+  "version": "2.0.1",
+  "description": "Salesforce Multi-User Login Test App",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "chrome": "^0.1.0",
+    "express": "^5.1.0",
+    "selenium-webdriver": "^4.38.0"
+  },
+  "engines": {
+    "node": "18.x" 
+    // ※ 必須ではありませんが、使用するNode.jsのバージョンを指定することを推奨します
+  }  
+}

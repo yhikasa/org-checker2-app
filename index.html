@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Salesforce ログインテスト</title>
+</head>
+<body>
+    <h2>Salesforce 複数ユーザーログインテストv2</h2>
+    <form action="/test-login" method="POST">
+        <label for="usernames">ユーザー名リスト (改行区切り):</label><br>
+        <textarea id="usernames" name="usernames" rows="10" cols="50" required>{{ lastUsernames }}</textarea><br><br>
+
+        <label for="password">パスワード:</label><br>
+        <input type="text" id="password" name="password" value="{{ lastPassword }}" required><br><br>
+
+        <button type="submit">ログインテスト実行</button>
+    </form>
+    <hr>
+    <h3>結果:</h3>
+    <pre>{{ results }}</pre>
+</body>
+</html>
