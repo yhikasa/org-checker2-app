@@ -1,7 +1,7 @@
 {
   "name": "sf-login-tester",
   "version": "2.0.1",
-  "description": "Salesforce Multi-User Login Test App",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node server.js"
@@ -9,14 +9,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "body-parser": "^2.2.0",
-    "chrome": "^0.1.0",
     "express": "^5.1.0",
     "selenium-webdriver": "^4.38.0"
   },
   "engines": {
-    "node": "20.x" 
-  }  
+    "node": "24.x"
+  }
 }
