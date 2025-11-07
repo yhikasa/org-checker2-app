@@ -39,7 +39,14 @@ async function runLoginTest(username, password) {
         options.addArguments('--headless'); // GUIなしのヘッドレスモード
         options.addArguments('--no-sandbox');
         options.addArguments('--disable-dev-shm-usage');
-        
+
+        // Heroku環境でパスを動的に参照させる (または以下のパスを環境変数として設定)
+        const chromePath = process.env.CHROME_BIN || process.env.GOOGLE_CHROME_BIN;
+
+        if (chromePath) {
+            options.setBinaryPath(chromePath);
+        }
+                
         driver = await new Builder()
             .forBrowser('chrome')
             .setChromeOptions(options)
