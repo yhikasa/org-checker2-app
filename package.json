@@ -17,7 +17,7 @@
     "selenium-webdriver": "^4.38.0"
   },
   "engines": {
-    "node": "18.x" 
+    "node": "20.x" 
     // ※ 必須ではありませんが、使用するNode.jsのバージョンを指定することを推奨します
   }  
 }
