@@ -2,21 +2,94 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Salesforce ログインテスト</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salesforce ログインチェッカー</title>
+    <link rel="stylesheet" href="https://unpkg.com/@salesforce-ux/design-system/assets/styles/salesforce-lightning-design-system.min.css">
+    <style>
+        /* Herokuの幅に合わせてコンテナを調整 */
+        .slds-scope {
+            padding: 1rem;
+        }
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        /* 結果表示エリアのスタイル調整 */
+        .result-area {
+            white-space: pre-wrap;
+            font-family: monospace;
+            padding: 1rem;
+            background-color: #f7f9fb;
+            border: 1px solid #dddbda;
+        }
+    </style>
 </head>
-<body>
-    <h2>Salesforce 複数ユーザーログインテストv2</h2>
-    <form action="/test-login" method="POST">
-        <label for="usernames">ユーザー名リスト (改行区切り):</label><br>
-        <textarea id="usernames" name="usernames" rows="10" cols="50" required>{{ lastUsernames }}</textarea><br><br>
+<body class="slds-scope">
+    <div class="main-container">
+        <header class="slds-page-header" role="banner">
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-title">
+                    <div class="slds-media">
+                        <div class="slds-media__figure">
+                            <span class="slds-icon_container slds-icon-standard-account" title="Account">
+                                <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                                    <use xlink:href="/assets/icons/standard-icons/utility-sprite.svg#setup_assistant"></use>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="slds-media__body">
+                            <h1 class="slds-page-header__title slds-truncate slds-align-middle" title="ログインチェッカー">
+                                Salesforce 組織ログインチェッカー
+                            </h1>
+                            <p class="slds-text-body_small slds-line-height_reset">複数のユーザーアカウントの認証情報をテストします。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <div class="slds-card slds-p-around_medium slds-m-top_large">
+            <h2 class="slds-card__header-title slds-text-heading_small">ログイン情報入力</h2>
+            <div class="slds-card__body slds-card__body_inner">
+                <form action="/test-login" method="POST" class="slds-form_stacked">
+                    
+                    <div class="slds-form-element slds-m-bottom_medium">
+                        <label class="slds-form-element__label" for="usernames">
+                            ユーザー名リスト (改行区切り)
+                        </label>
+                        <div class="slds-form-element__control">
+                            <textarea id="usernames" name="usernames" class="slds-textarea" rows="5" required>
+                                {{ lastUsernames }}
+                            </textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="slds-form-element slds-m-bottom_large">
+                        <label class="slds-form-element__label" for="password">
+                            パスワード (共通)
+                        </label>
+                        <div class="slds-form-element__control">
+                            <input type="password" id="password" name="password" class="slds-input" required value="{{ lastPassword }}">
+                        </div>
+                    </div>
+                    
+                    <div class="slds-align_absolute-center">
+                        <button type="submit" class="slds-button slds-button_brand">
+                            ログインテストを実行
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-        <label for="password">パスワード:</label><br>
-        <input type="text" id="password" name="password" value="{{ lastPassword }}" required><br><br>
-
-        <button type="submit">ログインテスト実行</button>
-    </form>
-    <hr>
-    <h3>結果:</h3>
-    <pre>{{ results }}</pre>
+        <div class="slds-card slds-m-top_large">
+            <h2 class="slds-card__header-title slds-text-heading_small">テスト結果</h2>
+            <div class="slds-card__body slds-card__body_inner">
+                <div class="result-area">
+                    {{ results }}
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
