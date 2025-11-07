@@ -39,24 +39,25 @@ async function runLoginTest(username, password) {
         options.addArguments('--headless'); // GUIなしのヘッドレスモード
         options.addArguments('--no-sandbox');
         options.addArguments('--disable-dev-shm-usage');
+        options.add_argument("--disable-extensions")
 
         // Heroku環境でパスを動的に参照させる (または以下のパスを環境変数として設定)
-        // const chromePath = process.env.CHROME_BIN || process.env.GOOGLE_CHROME_BIN;
-        // const driverPath = process.env.CHROMEDRIVER_PATH; // 環境変数から取得
+        const chromePath = process.env.CHROME_BIN || process.env.GOOGLE_CHROME_BIN;
+        const driverPath = process.env.CHROMEDRIVER_PATH; // 環境変数から取得
 
-        // if (chromePath) {
-            // options.setBinaryPath(chromePath);
-        // }
+        if (chromePath) {
+            options.setBinaryPath(chromePath);
+        }
         // 💡 修正 2: Chromedriver のパスを Service Builder に設定 (最も重要な修正)
-        // let serviceBuilder;
-        // if (driverPath) {
-            // serviceBuilder = new chrome.ServiceBuilder(driverPath);
-        // }
+        let serviceBuilder;
+        if (driverPath) {
+            serviceBuilder = new chrome.ServiceBuilder(driverPath);
+        }
 
         driver = await new Builder()
             .forBrowser('chrome')
             .setChromeOptions(options)
-            // .setChromeService(serviceBuilder)
+            .setChromeService(serviceBuilder)
             .build();
         
         await driver.get(SF_LOGIN_URL);
