@@ -1,6 +1,14 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs'); // ファイルシステムモジュールを追加
+
+// add ファイル書き込み用 
+const path = require('path');
+const { v4: uuidv4 } = require('uuid'); // ユニークID生成ライブラリ
+const { fork } = require('child_process'); // Workerプロセス起動用
+// npm install uuid が必要
+const LOG_DIR = __dirname; // ログファイルをプロジェクトルートに保存
+
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 
@@ -30,65 +38,34 @@ app.get('/', (req, res) => {
     res.send(renderHtml());
 });
 
-// ログイン処理を実行する関数
-async function runLoginTest(username, password) {
-    let driver;
+// 結果表示ページ (GET /results/:jobId) - 2回目以降のアクセスはこちら
+app.get('/results/:jobId', async (req, res) => {
+    const jobId = req.params.jobId;
+    const logFilePath = path.join(LOG_DIR, `${jobId}.log`);
+    let resultsOutput = `--- 実行 ID: ${jobId} ---\nステータス: 処理中... \n\n`;
+
     try {
-        // Herokuなどの環境で実行するためのChromeオプション
-        let options = new chrome.Options();
-        options.addArguments('--headless'); // GUIなしのヘッドレスモード
-        options.addArguments('--no-sandbox');
-        options.addArguments('--disable-dev-shm-usage');
-
-        // Heroku環境でパスを動的に参照させる (または以下のパスを環境変数として設定)
-        const chromePath = process.env.CHROME_BIN || process.env.GOOGLE_CHROME_BIN;
-        const driverPath = process.env.CHROMEDRIVER_PATH; // 環境変数から取得
-
-        if (chromePath) {
-            options.setBinaryPath(chromePath);
-        }
-        // 💡 修正 2: Chromedriver のパスを Service Builder に設定 (最も重要な修正)
-        let serviceBuilder;
-        if (driverPath) {
-            serviceBuilder = new chrome.ServiceBuilder(driverPath);
-        }
-
-        driver = await new Builder()
-            .forBrowser('chrome')
-            .setChromeOptions(options)
-            .setChromeService(serviceBuilder)
-            .build();
+        // ログファイルの内容を読み込み
+        const logContent = fs.readFileSync(logFilePath, 'utf8');
+        resultsOutput = logContent;
         
-        await driver.get(SF_LOGIN_URL);
-        
-        // ユーザー名とパスワードを入力
-        await driver.findElement(By.id('username')).sendKeys(username);
-        await driver.findElement(By.id('password')).sendKeys(password);
-        await driver.findElement(By.id('Login')).click();
-
-        // ログイン成功/失敗の判定
-        // 成功: ログイン後に表示される要素（例: App Launcherのアイコン）が出現するまで待機
-        try {
-            await driver.wait(until.urlContains('lightning'), 10000); // URLがLightningに変わるのを待つ
-            return { username, status: '成功 ✅' };
-        } catch (e) {
-            // 失敗: エラーメッセージが表示されているか確認
-            const errorElement = await driver.findElements(By.id('error'));
-            if (errorElement.length > 0) {
-                return { username, status: '失敗 ❌ (無効な認証情報)' };
-            }
-            return { username, status: '失敗 ❌ (タイムアウト/不明なエラー)' };
+        if (!logContent.includes('--- JOB COMPLETED ---')) {
+            // 処理中の場合、自動更新を促すメッセージを追加
+            resultsOutput += "\n\n(処理中です。数秒後にページをリロードして結果を確認してください。)";
         }
-
     } catch (error) {
-        console.error(`Error processing ${username}:`, error.message);
-        return { username, status: 'エラー 🛑 (システムエラー)' };
-    } finally {
-        if (driver) {
-            await driver.quit(); // ブラウザを閉じる
+        if (error.code === 'ENOENT') {
+            // ファイルが存在しない場合（まだWorkerが書き込みを開始していない、またはIDが不正）
+            resultsOutput = `実行 ID: ${jobId} のジョブはまだ開始されていません。しばらくしてからリロードしてください。`;
+        } else {
+            // その他のファイル読み込みエラー
+            resultsOutput = `エラー: 結果ファイルの読み込みに失敗しました。`;
         }
     }
-}
+
+    res.send(renderHtml(resultsOutput, '', ''));
+});
+
 
 // フォーム送信ルート (POST)
 app.post('/test-login', async (req, res) => {
@@ -101,23 +78,24 @@ app.post('/test-login', async (req, res) => {
         return res.send("ユーザー名とパスワードを入力してください。");
     }
 
-    const testResults = [];
+// 1. ユニークな Job ID を発番
+    const jobId = uuidv4(); 
     
-    // 各ユーザーに対してログインテストを順番に実行
-    for (const username of userList) {
-        const result = await runLoginTest(username, password);
-        console.log(`ユーザー: ${result.username} -> ${result.status}`);
-        testResults.push(result);
-    }
+    // 2. Workerプロセスをフォークして非同期処理を開始 (H12回避)
+    // Workerプロセスに jobId, usernames, password を引数として渡す
+    const workerProcess = fork('process.js', [jobId, usernames, password]);
 
-    // 結果を整形してHTMLに返す
-    let output = "--- ログインテスト結果 ---\n";
-    testResults.forEach(r => {
-        output += `ユーザー: ${r.username} -> ${r.status}\n`;
+    workerProcess.on('error', (err) => {
+        console.error(`Worker Process Error for ${jobId}:`, err);
+        // エラー発生時、ファイルにエラーを追記するなどの処理も可能
     });
-    
-    // フォームに以前の入力内容を埋め込んでクライアントに返す
-    res.send(renderHtml(output, usernames, password));
+
+    // 3. 結果表示ページに即座にリダイレクト
+    res.redirect(`/results/${jobId}`);
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
 
 app.listen(PORT, () => {

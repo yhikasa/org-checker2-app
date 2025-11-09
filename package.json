@@ -12,7 +12,8 @@
   "dependencies": {
     "body-parser": "^2.2.0",
     "express": "^5.1.0",
-    "selenium-webdriver": "^4.38.0"
+    "selenium-webdriver": "^4.38.0",
+    "uuid": "^13.0.0"
   },
   "engines": {
     "node": "24.x"
