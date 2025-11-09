@@ -27,7 +27,40 @@ async function executeLoginTest(jobId, usernames, password) {
 
         try {
             // ... (Selenium Builderとオプションの設定 - 前回の成功コードを使用) ...
+            // Herokuなどの環境で実行するためのChromeオプション
+            let options = new chrome.Options();
+            options.addArguments('--headless'); // GUIなしのヘッドレスモード
+            options.addArguments('--no-sandbox');
+            options.addArguments('--disable-dev-shm-usage');
+
+            // Heroku環境でパスを動的に参照させる (または以下のパスを環境変数として設定)
+            const chromePath = process.env.CHROME_BIN || process.env.GOOGLE_CHROME_BIN;
+            const driverPath = process.env.CHROMEDRIVER_PATH; // 環境変数から取得
+
+            if (chromePath) {
+                options.setBinaryPath(chromePath);
+            }
+            // 💡 修正 2: Chromedriver のパスを Service Builder に設定 (最も重要な修正)
+            let serviceBuilder;
+            if (driverPath) {
+                serviceBuilder = new chrome.ServiceBuilder(driverPath);
+            }
+
+            driver = await new Builder()
+                .forBrowser('chrome')
+                .setChromeOptions(options)
+                .setChromeService(serviceBuilder)
+                .build();
             
+            await driver.get(SF_LOGIN_URL); 
+            // ユーザー名とパスワードを入力
+            await driver.findElement(By.id('username')).sendKeys(username);
+            await driver.findElement(By.id('password')).sendKeys(password);
+            await driver.findElement(By.id('Login')).click();
+
+            // ログイン成功/失敗の判定
+            // 成功: ログイン後に表示される要素（例: App Launcherのアイコン）が出現するまで待機
+            /*           
             // 環境変数からのパス設定 (Heroku上での動作確認済みパスを強制適用)
             let options = new chrome.Options();
             options.addArguments('--headless', '--no-sandbox', '--disable-dev-shm-usage');
@@ -44,7 +77,7 @@ async function executeLoginTest(jobId, usernames, password) {
             await driver.findElement(By.id('username')).sendKeys(username);
             await driver.findElement(By.id('password')).sendKeys(password);
             await driver.findElement(By.id('Login')).click();
-
+            */
             try {
                 await driver.wait(until.urlContains('lightning'), 15000); // 待機
                 resultStatus = 'SUCCESS ✅';
