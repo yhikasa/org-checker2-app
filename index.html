@@ -67,7 +67,7 @@
                             パスワード (共通)
                         </label>
                         <div class="slds-form-element__control">
-                            <input type="password" id="password" name="password" class="slds-input" required value="{{ lastPassword }}">
+                            <input type="text" id="password" name="password" class="slds-input" required value="{{ lastPassword }}">
                         </div>
                     </div>
                     
@@ -83,9 +83,7 @@
         <div class="slds-card slds-m-top_large">
             <h2 class="slds-card__header-title slds-text-heading_small">テスト結果</h2>
             <div class="slds-card__body slds-card__body_inner">
-                <div class="result-area">
-                    {{ results }}
-                </div>
+                <div class="result-area">{{ results }}</div>
             </div>
         </div>
     </div>
