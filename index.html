@@ -89,11 +89,16 @@
             <div class="slds-card__body slds-card__body_inner">
                 <div class="result-area">{{ results }}</div>
             </div>
-                    <div class="slds-align_absolute-center">
-                        <button type="submit" class="slds-button slds-button_brand">
-                            ログインテストを実行
-                        </button>
-                    </div>
+            <div class="slds-align_absolute-center">
+                <button type="submit" class="slds-button slds-button_brand" onclick="window.location.reload(true);">
+                    更新
+                </button>
+            </div>
+            <div class="slds-align_absolute-center">
+                <button type="submit" class="slds-button slds-button_brand" onclick="location.href=/">
+                    戻る
+                </button>
+            </div>
         </div>
     </div>
 </body>
