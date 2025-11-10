@@ -6,7 +6,6 @@ const fs = require('fs'); // ファイルシステムモジュールを追加
 const path = require('path');
 const { v4: uuidv4 } = require('uuid'); // ユニークID生成ライブラリ
 const { fork } = require('child_process'); // Workerプロセス起動用
-// npm install uuid が必要
 const LOG_DIR = __dirname; // ログファイルをプロジェクトルートに保存
 
 const { Builder, By, until } = require('selenium-webdriver');
@@ -81,7 +80,8 @@ app.post('/test-login', async (req, res) => {
     // 1. ユニークな Job ID を発番
     const jobId = uuidv4(); 
     const logFilePath = path.join(__dirname, `${jobId}.log`); // ログファイルのパス    
-    
+    console.log('FILEPAHT: ', logFilePath);
+
     try {
         // 💡 追加修正: process.js キック前に、ログファイルの初期コンテンツを書き込み
         let initialContent = `--- 実行 ID: ${jobId} ---\n`;
@@ -91,6 +91,7 @@ app.post('/test-login', async (req, res) => {
         initialContent += '--------------------\n';
         initialContent += '--- RESULTS ---\n';
 
+        console.log('INITIAL CONTENT: ', initialContent);
         // Web Dyno の処理中に同期的にファイルを書き込みます
         fs.writeFileSync(logFilePath, initialContent);
         
