@@ -87,7 +87,7 @@ app.post('/test-login', async (req, res) => {
         let initialContent = `--- 実行 ID: ${jobId} ---\n`;
         initialContent += `ステータス: PENDING (処理待ち)\n`;
         initialContent += '--- PROCESS LIST ---\n';
-        initialContent += usernamesString + '\n';
+        initialContent += usernames + '\n';
         initialContent += '--------------------\n';
         initialContent += '--- RESULTS ---\n';
 
