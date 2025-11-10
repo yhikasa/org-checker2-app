@@ -52,7 +52,7 @@ app.get('/results/:jobId', async (req, res) => {
         const logContent = fs.readFileSync(logFilePath, 'utf8');
         resultsOutput = logContent;
         
-        if (!logContent.includes('--- JOB COMPLETED ---')) {
+        if (!logContent.includes('--- PROCESS COMPLETED ---')) {
             // 処理中の場合、自動更新を促すメッセージを追加
             resultsOutput += "\n\n(処理中です。数秒後にページをリロードして結果を確認してください。)";
         }
@@ -91,9 +91,9 @@ app.post('/test-login', async (req, res) => {
         let initialContent = '';
         // initialContent += `--- 実行 ID: ${jobId} ---\n`;
         // initialContent += `ステータス: PENDING (処理待ち)\n`;
-        initialContent += '--- PROCESS LIST --- ' + password + '\n';
-        initialContent += usernames + '\n';
-        initialContent += '--------------------\n';
+        initialContent += '--- PROCESS LIST : ' + password + ' --- \n';
+        initialContent += usernames.trim() + '\n';
+        // initialContent += '--------------------\n';
         // initialContent += '--- RESULTS ---\n';
 
         console.log('INITIAL CONTENT: ', initialContent);
