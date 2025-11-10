@@ -22,7 +22,6 @@ app.use(express.static('public')); // 必要に応じて静的ファイル用フ
 //function renderHtml(results = '', lastUsernames = '', lastPassword = '') {
 // 修正 : showForm 引数 (デフォルトは true) を追加
 function renderHtml(results = '', lastUsernames = '', lastPassword = '', showForm = true) {    // index.html ファイルを読み込む
-rm==true){
     let htmlContent;
     if(showForm==true){
         htmlContent = fs.readFileSync('./index.html', 'utf8');
