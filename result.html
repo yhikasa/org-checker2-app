@@ -43,10 +43,20 @@
                             </h1>
                             <p class="slds-text-body_small slds-line-height_reset">複数のユーザーアカウントの認証情報をテストします。</p>
                             <div class="slds-align_absolute-center">
-                                <button type="submit" class="slds-button slds-button_brand" onclick="window.location.href=/">
-                                    他のログイン情報を入力
+                                <button type="submit" class="slds-button slds-button_brand" onclick="window.history.back();">
+                                    他の認証情報を入力
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-page-header__col-actions">
+                    <div class="slds-page-header__controls">
+                        <div class="slds-page-header__control">
+                            <button class="slds-button slds-button_neutral" onclick="window.location.href = '/';">
+                                他の認証情報を入力
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -60,11 +70,11 @@
             </div>
             <div class="slds-align_absolute-center">
                 <button type="submit" class="slds-button slds-button_brand" onclick="window.location.reload(true);">
-                    更新
+                    リロード
                 </button>
             </div>
         </div>
     </div>
-    
+
 </body>
 </html>
