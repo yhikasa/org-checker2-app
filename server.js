@@ -22,15 +22,23 @@ app.use(express.static('public')); // 必要に応じて静的ファイル用フ
 //function renderHtml(results = '', lastUsernames = '', lastPassword = '') {
 // 修正 : showForm 引数 (デフォルトは true) を追加
 function renderHtml(results = '', lastUsernames = '', lastPassword = '', showForm = true) {    // index.html ファイルを読み込む
-    let htmlContent = fs.readFileSync('./index.html', 'utf8');
+rm==true){
+    let htmlContent;
+    if(showForm==true){
+        htmlContent = fs.readFileSync('./index.html', 'utf8');
 
-    // プレースホルダーを置換
-    htmlContent = htmlContent.replace('{{ results }}', results);
-    htmlContent = htmlContent.replace('{{ lastUsernames }}', lastUsernames);
-    htmlContent = htmlContent.replace('{{ lastPassword }}', lastPassword);
-    
-    // 修正 2: フォーム表示フラグを HTML に渡す
-    htmlContent = htmlContent.replace('{{ showForm }}', showForm ? '' : 'none');
+        // プレースホルダーを置換
+        htmlContent = htmlContent.replace('{{ results }}', results);
+        htmlContent = htmlContent.replace('{{ lastUsernames }}', lastUsernames);
+        htmlContent = htmlContent.replace('{{ lastPassword }}', lastPassword);
+        
+        // 修正 2: フォーム表示フラグを HTML に渡す
+        htmlContent = htmlContent.replace('{{ showForm }}', showForm ? '' : 'none');
+    }else{
+        htmlContent = fs.readFileSync('./result.html', 'utf8');
+        // プレースホルダーを置換
+        htmlContent = htmlContent.replace('{{ results }}', results);
+    }
     
     return htmlContent;
 }
