@@ -22,6 +22,10 @@
             background-color: #f7f9fb;
             border: 1px solid #dddbda;
         }
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
     </style>
 </head>
 <body class="slds-scope">
@@ -48,7 +52,7 @@
             </div>
         </header>
         
-        <div class="slds-card slds-p-around_medium slds-m-top_large">
+        <div class="slds-card slds-p-around_medium slds-m-top_large style="display: {{ showForm }};">
             <h2 class="slds-card__header-title slds-text-heading_small">ログイン情報入力</h2>
             <div class="slds-card__body slds-card__body_inner">
                 <form action="/test-login" method="POST" class="slds-form_stacked">

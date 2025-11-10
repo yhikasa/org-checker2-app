@@ -15,7 +15,7 @@ function logResult(jobId, message) {
 
 // メインのログインテスト処理
 async function executeLoginTest(jobId, usernames, password) {
-    logResult(jobId, '--- STARTING LOGIN TEST ---');
+    logResult(jobId, '--- RESULT LIST ---');
     
     const userList = usernames.split('\n').map(u => u.trim()).filter(u => u.length > 0);
     
@@ -82,7 +82,7 @@ async function executeLoginTest(jobId, usernames, password) {
             logResult(jobId, `RESULT: ${username} -> ${resultStatus} ${resultMessage}`);
         }
     }
-    logResult(jobId, '--- JOB COMPLETED ---');
+    logResult(jobId, '--- PROCESS COMPLETED ---');
 }
 
 // Node.jsの子プロセスとして実行される

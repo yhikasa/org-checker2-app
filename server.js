@@ -84,12 +84,13 @@ app.post('/test-login', async (req, res) => {
 
     try {
         // 💡 追加修正: process.js キック前に、ログファイルの初期コンテンツを書き込み
-        let initialContent = `--- 実行 ID: ${jobId} ---\n`;
-        initialContent += `ステータス: PENDING (処理待ち)\n`;
-        initialContent += '--- PROCESS LIST ---\n';
+        let initialContent = '';
+        // initialContent += `--- 実行 ID: ${jobId} ---\n`;
+        // initialContent += `ステータス: PENDING (処理待ち)\n`;
+        initialContent += '--- PROCESS LIST --- ' + password '\n';
         initialContent += usernames + '\n';
         initialContent += '--------------------\n';
-        initialContent += '--- RESULTS ---\n';
+        // initialContent += '--- RESULTS ---\n';
 
         console.log('INITIAL CONTENT: ', initialContent);
         // Web Dyno の処理中に同期的にファイルを書き込みます
