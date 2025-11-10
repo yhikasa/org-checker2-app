@@ -78,20 +78,37 @@ app.post('/test-login', async (req, res) => {
         return res.send("ユーザー名とパスワードを入力してください。");
     }
 
-// 1. ユニークな Job ID を発番
+    // 1. ユニークな Job ID を発番
     const jobId = uuidv4(); 
+    const logFilePath = path.join(__dirname, `${jobId}.log`); // ログファイルのパス    
     
-    // 2. Workerプロセスをフォークして非同期処理を開始 (H12回避)
-    // Workerプロセスに jobId, usernames, password を引数として渡す
-    const workerProcess = fork('process.js', [jobId, usernames, password]);
+    try {
+        // 💡 追加修正: process.js キック前に、ログファイルの初期コンテンツを書き込み
+        let initialContent = `--- 実行 ID: ${jobId} ---\n`;
+        initialContent += `ステータス: PENDING (処理待ち)\n`;
+        initialContent += '--- PROCESS LIST ---\n';
+        initialContent += usernamesString + '\n';
+        initialContent += '--------------------\n';
+        initialContent += '--- RESULTS ---\n';
 
-    workerProcess.on('error', (err) => {
-        console.error(`Worker Process Error for ${jobId}:`, err);
-        // エラー発生時、ファイルにエラーを追記するなどの処理も可能
-    });
+        // Web Dyno の処理中に同期的にファイルを書き込みます
+        fs.writeFileSync(logFilePath, initialContent);
+        
+        console.log(`[Web] Initialized log file for Job ID: ${jobId}`);    // 2. Workerプロセスをフォークして非同期処理を開始 (H12回避)
+        // Workerプロセスに jobId, usernames, password を引数として渡す
+        const workerProcess = fork('process.js', [jobId, usernames, password]);
 
-    // 3. 結果表示ページに即座にリダイレクト
-    res.redirect(`/results/${jobId}`);
+        workerProcess.on('error', (err) => {
+            console.error(`Worker Process Error for ${jobId}:`, err);
+            // エラー発生時、ファイルにエラーを追記するなどの処理も可能
+        });
+
+        // 3. 結果表示ページに即座にリダイレクト
+        res.redirect(`/results/${jobId}`);
+    } catch (error) {
+        console.error("Error during job creation or file write:", error);
+        res.status(500).send(renderHtml("ジョブの作成中にエラーが発生しました。", usernames, password));
+    }
 });
 
 app.listen(PORT, () => {
