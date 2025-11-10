@@ -55,7 +55,7 @@
         <div class="slds-card slds-p-around_medium slds-m-top_large style="display: {{ showForm }};">
             <h2 class="slds-card__header-title slds-text-heading_small">ログイン情報入力</h2>
             <div class="slds-card__body slds-card__body_inner">
-                <form action="/test-login" method="POST" class="slds-form_stacked">
+                <form action="/" method="POST" class="slds-form_stacked">
                     
                     <div class="slds-form-element slds-m-bottom_medium">
                         <label class="slds-form-element__label" for="usernames">
@@ -89,6 +89,11 @@
             <div class="slds-card__body slds-card__body_inner">
                 <div class="result-area">{{ results }}</div>
             </div>
+                    <div class="slds-align_absolute-center">
+                        <button type="submit" class="slds-button slds-button_brand">
+                            ログインテストを実行
+                        </button>
+                    </div>
         </div>
     </div>
 </body>

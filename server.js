@@ -71,7 +71,7 @@ app.get('/results/:jobId', async (req, res) => {
 
 
 // フォーム送信ルート (POST)
-app.post('/test-login', async (req, res) => {
+app.post('/', async (req, res) => {
     const { usernames, password } = req.body;
     
     // ユーザー名リストを改行で分割
@@ -91,8 +91,9 @@ app.post('/test-login', async (req, res) => {
         let initialContent = '';
         // initialContent += `--- 実行 ID: ${jobId} ---\n`;
         // initialContent += `ステータス: PENDING (処理待ち)\n`;
-        initialContent += '--- PROCESS LIST : ' + password + ' --- \n';
+        initialContent += '--- PROCESS LIST --- \n';
         initialContent += usernames.trim() + '\n';
+        initialContent += password + '\n';
         // initialContent += '--------------------\n';
         // initialContent += '--- RESULTS ---\n';
 
