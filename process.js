@@ -26,6 +26,12 @@ async function executeLoginTest(jobId, usernames, password) {
         let resultMessage = 'システムエラー';
 
         try {
+            // Herokuなどの環境で実行するためのChromeオプション
+            let options = new chrome.Options();
+            options.addArguments('--headless'); // GUIなしのヘッドレスモード
+            options.addArguments('--no-sandbox');
+            options.addArguments('--disable-dev-shm-usage');
+
             // 環境変数が設定されていない場合、ローカル環境と判断する
             // Heroku環境では通常、'production'や'staging'などのNODE_ENVが設定されています
             const isHeroku = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
@@ -44,13 +50,6 @@ async function executeLoginTest(jobId, usernames, password) {
             // else (ローカル環境の場合): ServiceBuilder の設定は不要。
             // Selenium Manager が自動でローカルPCのPATHからドライバーを見つけます。
             
-            // ... (Selenium Builderとオプションの設定 - 前回の成功コードを使用) ...
-            // Herokuなどの環境で実行するためのChromeオプション
-            let options = new chrome.Options();
-            options.addArguments('--headless'); // GUIなしのヘッドレスモード
-            options.addArguments('--no-sandbox');
-            options.addArguments('--disable-dev-shm-usage');
-
             // Driverの構築
             let builder = new Builder()
                 .forBrowser('chrome')
