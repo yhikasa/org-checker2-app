@@ -14,11 +14,14 @@ function logResult(jobId, message) {
 }
 
 // メインのログインテスト処理
-async function executeLoginTest(jobId, usernames, password) {
+async function executeLoginTest(jobId, usernames, password, startTimeIso) {
     logResult(jobId, '--- RESULT LIST ---');
     
     const userList = usernames.split('\n').map(u => u.trim()).filter(u => u.length > 0);
     
+    let successCounter = 0;
+    let failureCounter = 0;
+
     for (const username of userList) {
 //        logResult(jobId, `PROCESSING: ${username}`);
         let driver;
@@ -62,6 +65,7 @@ async function executeLoginTest(jobId, usernames, password) {
                 await driver.wait(until.urlContains('lightning'), 15000); // 待機
                 resultStatus = 'SUCCESS ✅';
                 resultMessage = 'ログイン成功';
+                successCounter++;
             } catch (e) {
                 const errorElement = await driver.findElements(By.id('error'));
                 if (errorElement.length > 0) {
@@ -71,10 +75,12 @@ async function executeLoginTest(jobId, usernames, password) {
                     resultStatus = 'FAILURE ❌';
                     resultMessage = 'タイムアウト';
                 }
+                failureCounter++;
             }
         } catch (error) {
             resultStatus = 'ERROR 🛑';
             resultMessage = `Workerエラー: ${error.message}`;
+            failureCounter++;
         } finally {
             if (driver) {
                 await driver.quit();
@@ -82,13 +88,25 @@ async function executeLoginTest(jobId, usernames, password) {
             logResult(jobId, `RESULT: ${username} -> ${resultStatus} ${resultMessage}`);
         }
     }
-    logResult(jobId, '--- PROCESS COMPLETED ---');
+    const endTime = new Date();
+    const startTime = new Date(startTimeIso);
+    const durationMs = endTime.getTime() - startTime.getTime();
+    const durationSeconds = (durationMs / 1000).toFixed(2);
+    if(failureCounter>0){
+        logResult(jobId, `\n--- PROCESS COMPLETED --- ${endTime.toLocaleString('ja-JP')} (${durationSeconds} seconds, ✅${successCounter}, ❌${failureCounter}) ---`);
+    }else{
+        logResult(jobId, `\n--- PROCESS COMPLETED --- ${endTime.toLocaleString('ja-JP')} (${durationSeconds} seconds, ✅${successCounter}) ---`);
+    }
+    // logResult(jobId, `END TIME: ${endTime.toLocaleString('ja-JP')}(JST)`);
+    // logResult(jobId, `DURATION: ${durationSeconds} seconds`);
+
 }
 
 // Node.jsの子プロセスとして実行される
-if (process.argv.length > 4) {
+if (process.argv.length > 5) {
     const jobId = process.argv[2];
     const usernames = process.argv[3];
     const password = process.argv[4];
-    executeLoginTest(jobId, usernames, password);
+    const startTimeIso = process.argv[5]; // 開始日時（ISO形式）
+    executeLoginTest(jobId, usernames, password, startTimeIso);
 }

@@ -90,14 +90,14 @@ app.post('/', async (req, res) => {
     // 1. ユニークな Job ID を発番
     const jobId = uuidv4(); 
     const logFilePath = path.join(__dirname, `${jobId}.log`); // ログファイルのパス    
-    console.log('FILEPAHT: ', logFilePath);
+    const now = new Date();
 
     try {
         // 💡 追加修正: process.js キック前に、ログファイルの初期コンテンツを書き込み
         let initialContent = '';
         // initialContent += `--- 実行 ID: ${jobId} ---\n`;
         // initialContent += `ステータス: PENDING (処理待ち)\n`;
-        initialContent += '--- PROCESS LIST --- \n';
+        initialContent += `--- PROCESS LIST ---  ${now.toLocaleString('ja-JP')}\n`;
         initialContent += usernames.trim() + '\n';
         initialContent += password + '\n';
         // initialContent += '--------------------\n';
@@ -109,7 +109,7 @@ app.post('/', async (req, res) => {
         
         console.log(`[Web] Initialized log file for Job ID: ${jobId}`);    // 2. Workerプロセスをフォークして非同期処理を開始 (H12回避)
         // Workerプロセスに jobId, usernames, password を引数として渡す
-        const workerProcess = fork('process.js', [jobId, usernames, password]);
+        const workerProcess = fork('process.js', [jobId, usernames, password, now.toISOString()]);
 
         workerProcess.on('error', (err) => {
             console.error(`Worker Process Error for ${jobId}:`, err);
