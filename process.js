@@ -30,32 +30,42 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
         let resultMessage = 'システムエラー';
 
         try {
-            // ... (Selenium Builderとオプションの設定 - 前回の成功コードを使用) ...
             // Herokuなどの環境で実行するためのChromeオプション
             let options = new chrome.Options();
             options.addArguments('--headless'); // GUIなしのヘッドレスモード
             options.addArguments('--no-sandbox');
             options.addArguments('--disable-dev-shm-usage');
 
-            // Heroku環境でパスを動的に参照させる (または以下のパスを環境変数として設定)
-            const chromePath = process.env.CHROME_BIN || process.env.GOOGLE_CHROME_BIN;
-            const driverPath = process.env.CHROMEDRIVER_PATH; // 環境変数から取得
-
-            if (chromePath) {
-                options.setBinaryPath(chromePath);
-            }
-            // 💡 修正 2: Chromedriver のパスを Service Builder に設定 (最も重要な修正)
-            let serviceBuilder;
-            if (driverPath) {
-                serviceBuilder = new chrome.ServiceBuilder(driverPath);
-            }
-
-            driver = await new Builder()
-                .forBrowser('chrome')
-                .setChromeOptions(options)
-                .setChromeService(serviceBuilder)
-                .build();
+            // 環境変数が設定されていない場合、ローカル環境と判断する
+            // Heroku環境では通常、'production'や'staging'などのNODE_ENVが設定されています
+            const isHeroku = process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging';
             
+            let serviceBuilder;
+            if(isHeroku){
+                const chromePath = process.env.CHROME_BIN || process.env.GOOGLE_CHROME_BIN;
+                if (chromePath) {
+                    options.setChromeBinaryPath(chromePath);
+                }
+                const driverPath = process.env.CHROMEDRIVER_PATH; // 環境変数から取得
+                if(driverPath){
+                    serviceBuilder = new chrome.ServiceBuilder(driverPath);
+                }
+            }
+            // else (ローカル環境の場合): ServiceBuilder の設定は不要。
+            // Selenium Manager が自動でローカルPCのPATHからドライバーを見つけます。
+            
+            // Driverの構築
+            let builder = new Builder()
+                .forBrowser('chrome')
+                .setChromeOptions(options);
+            
+            // Service Builderが設定されている場合のみ、セットする
+            if (serviceBuilder) {
+                builder = builder.setChromeService(serviceBuilder);
+            }
+            
+            driver = await builder.build();
+
             await driver.get(SF_LOGIN_URL); 
             // ユーザー名とパスワードを入力
             await driver.findElement(By.id('username')).sendKeys(username);
