@@ -15,7 +15,8 @@ function logResult(jobId, message) {
 
 // メインのログインテスト処理
 async function executeLoginTest(jobId, usernames, password, startTimeIso) {
-    logResult(jobId, '--- RESULT LIST ---');
+    // logResult(jobId, '--- RESULT LIST ---');
+    logResult(jobId, '\n■ 結果');
     
     const userList = usernames.split('\n').map(u => u.trim()).filter(u => u.length > 0);
     
@@ -85,7 +86,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
             if (driver) {
                 await driver.quit();
             }
-            logResult(jobId, `RESULT: ${username} -> ${resultStatus} ${resultMessage}`);
+            logResult(jobId, `${username} -> ${resultStatus} ${resultMessage}`);
         }
     }
     const endTime = new Date();
@@ -93,9 +94,9 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
     const durationMs = endTime.getTime() - startTime.getTime();
     const durationSeconds = (durationMs / 1000).toFixed(2);
     if(failureCounter>0){
-        logResult(jobId, `\n--- PROCESS COMPLETED --- ${endTime.toLocaleString('ja-JP')} (${durationSeconds} seconds, ✅${successCounter}, ❌${failureCounter}) ---`);
+        logResult(jobId, `\n■ 終了 : ${endTime.toLocaleString('ja-JP')} (${durationSeconds} seconds, ✅${successCounter}, ❌${failureCounter})`);
     }else{
-        logResult(jobId, `\n--- PROCESS COMPLETED --- ${endTime.toLocaleString('ja-JP')} (${durationSeconds} seconds, ✅${successCounter}) ---`);
+        logResult(jobId, `\n■ 終了 : ${endTime.toLocaleString('ja-JP')} (${durationSeconds} seconds, ✅${successCounter})`);
     }
     // logResult(jobId, `END TIME: ${endTime.toLocaleString('ja-JP')}(JST)`);
     // logResult(jobId, `DURATION: ${durationSeconds} seconds`);
