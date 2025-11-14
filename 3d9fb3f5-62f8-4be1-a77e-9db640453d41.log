@@ -1,0 +1,8 @@
+--- PROCESS LIST --- 
+admin@afs201jp.25091701.com
+admin@dex4502jp.25102902.com
+salesforce1
+--- RESULT LIST ---
+RESULT: admin@afs201jp.25091701.com -> ERROR 🛑 Workerエラー: session not created: DevToolsActivePort file doesn't exist
+RESULT: admin@dex4502jp.25102902.com -> ERROR 🛑 Workerエラー: session not created: DevToolsActivePort file doesn't exist
+--- PROCESS COMPLETED ---
