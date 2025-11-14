@@ -1,13 +1,12 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const fs = require('fs'); // ファイルシステムモジュールを追加
-
-// add ファイル書き込み用 
-const path = require('path');
+const fs = require('fs');       // ファイルシステムモジュールを追加
+const path = require('path');   // add ファイル書き込み用 
 const { v4: uuidv4 } = require('uuid'); // ユニークID生成ライブラリ
 const { fork } = require('child_process'); // Workerプロセス起動用
-const LOG_DIR = __dirname; // ログファイルをプロジェクトルートに保存
+const archiver = require('archiver'); // 💡 archiver をインポート
 
+const LOG_DIR = __dirname; // ログファイルをプロジェクトルートに保存
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 
@@ -125,8 +124,132 @@ app.post('/', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// --- 新規追加: ログファイルの一覧表示ルート (GET /dir) ---
+app.get('/dir', (req, res) => {
+    try {
+        // __dirname にあるファイルを取得
+        const files = fs.readdirSync(LOG_DIR);
+        
+        // 拡張子が .log または .PROCESS_LIST のファイルのみをフィルタリング
+        const logFiles = files.filter(file => 
+            file.endsWith('.log')
+        );
+
+        let html = `
+            <!DOCTYPE html>
+            <html lang="ja">
+            <head>
+                <meta charset="UTF-8">
+                <title>ログファイル一覧</title>
+                <link rel="stylesheet" href="https://unpkg.com/@salesforce-ux/design-system/assets/styles/salesforce-lightning-design-system.min.css">
+                <style> .main-container { max-width: 800px; margin: 2rem auto; } </style>
+            </head>
+            <body class="slds-scope">
+                <div class="main-container slds-card slds-p-around_medium">
+                    <h2 class="slds-text-heading_medium slds-m-bottom_large">ログファイル一覧 (${LOG_DIR})</h2>
+                    <ul class="slds-list_dotted">
+        `;
+        
+        if (logFiles.length === 0) {
+            html += `<li>ファイルが見つかりません。</li>`;
+        } else {
+            logFiles.forEach(file => {
+                const filePath = path.join(LOG_DIR, file);
+                const stats = fs.statSync(filePath);
+                
+                html += `
+                    <li class="slds-m-bottom_x-small">
+                        <a href="/log/${file}" class="slds-text-link">${file}</a> 
+                        <span class="slds-text-color_weak slds-m-left_small">(${stats.size} bytes)</span>
+                    </li>
+                `;
+            });
+        }
+        
+        html += `
+                    </ul>
+                    <div class="slds-m-top_large slds-grid slds-grid_align-spread">
+                        <a href="/" class="slds-button slds-button_neutral">フォームに戻る</a>
+                        <a href="/download-logs" class="slds-button slds-button_brand">全ログを ZIP ダウンロード</a>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+        res.send(html);
+    } catch (error) {
+        console.error('Error listing files:', error);
+        res.status(500).send('ファイル一覧の取得中にエラーが発生しました。');
+    }
+});
+
+// --- 新規追加: ファイル内容表示ルート (GET /log/:filename) ---
+app.get('/log/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(LOG_DIR, filename);
+
+    if (filename.includes('..') || !fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+        return res.status(404).send('ファイルが見つからないか、アクセスが拒否されました。');
+    }
+
+    try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        let html = `
+            <!DOCTYPE html>
+            <html lang="ja">
+            <head>
+                <meta charset="UTF-8">
+                <title>${filename} の内容</title>
+                <link rel="stylesheet" href="https://unpkg.com/@salesforce-ux/design-system/assets/styles/salesforce-lightning-design-system.min.css">
+                <style> .main-container { max-width: 90%; margin: 2rem auto; } .log-content { white-space: pre-wrap; font-family: monospace; padding: 1rem; background-color: #f7f9fb; border: 1px solid #dddbda; } </style>
+            </head>
+            <body class="slds-scope">
+                <div class="main-container slds-card slds-p-around_medium">
+                    <h2 class="slds-text-heading_medium slds-m-bottom_large">${filename}</h2>
+                    <pre class="log-content">${content}</pre>
+                    <div class="slds-m-top_large">
+                        <a href="/dir" class="slds-button slds-button_neutral">ログ一覧に戻る</a>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+        res.send(html);
+    } catch (error) {
+        console.error('Error reading file:', error);
+        res.status(500).send('ファイル内容の読み込み中にエラーが発生しました。');
+    }
+});
+
+
+// --- 新規追加: 全ログファイルの ZIP ダウンロードルート (GET /download-logs) ---
+app.get('/download-logs', (req, res) => {
+    const archive = archiver('zip', {
+        zlib: { level: 9 } // 最高の圧縮レベル
+    });
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    res.attachment(`sf-login-logs-${timestamp}.zip`); // ダウンロード時のファイル名を指定
+
+    archive.on('error', function(err) {
+        res.status(500).send({ error: err.message });
+    });
+
+    // レスポンスパイプラインを設定
+    archive.pipe(res);
+
+    // ログファイルをアーカイブに追加
+    const files = fs.readdirSync(LOG_DIR);
+    files.filter(file => 
+        file.endsWith('.log') || file.endsWith('.PROCESS_LIST')
+    ).forEach(file => {
+        const filePath = path.join(LOG_DIR, file);
+        // ファイルをアーカイブにストリーミングで追加
+        archive.file(filePath, { name: file }); 
+    });
+
+    // アーカイブ処理を完了
+    archive.finalize();
 });
 
 app.listen(PORT, () => {

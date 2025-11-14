@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "archiver": "^7.0.1",
     "body-parser": "^2.2.0",
     "express": "^5.1.0",
     "selenium-webdriver": "^4.38.0",
