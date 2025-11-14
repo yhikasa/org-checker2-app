@@ -124,8 +124,8 @@ app.post('/', async (req, res) => {
     }
 });
 
-// --- 新規追加: ログファイルの一覧表示ルート (GET /dir) ---
-app.get('/dir', (req, res) => {
+// --- 新規追加: ログファイルの一覧表示ルート (GET /logs) ---
+app.get('/logs', (req, res) => {
     try {
         // __dirname にあるファイルを取得
         const files = fs.readdirSync(LOG_DIR);
@@ -133,34 +133,64 @@ app.get('/dir', (req, res) => {
         // 拡張子が .log または .PROCESS_LIST のファイルのみをフィルタリング
         const logFiles = files.filter(file => 
             file.endsWith('.log')
-        );
+).map(file => {
+            const filePath = path.join(LOG_DIR, file);
+            const stats = fs.statSync(filePath);
+            return {
+                name: file,
+                size: stats.size,
+                // 最終更新日時 (Modification Time) を取得し、読みやすい形式に整形
+                modifiedTime: stats.mtime.toLocaleString('ja-JP', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                })
+            };
+        }).sort((a, b) => {
+            // ファイル一覧を更新日時が新しい順にソート（新しいものが上）
+            return b.modifiedTime.localeCompare(a.modifiedTime);
+        });
 
-        let html = `
+let html = `
             <!DOCTYPE html>
             <html lang="ja">
             <head>
                 <meta charset="UTF-8">
                 <title>ログファイル一覧</title>
                 <link rel="stylesheet" href="https://unpkg.com/@salesforce-ux/design-system/assets/styles/salesforce-lightning-design-system.min.css">
-                <style> .main-container { max-width: 800px; margin: 2rem auto; } </style>
+                <style> 
+                    .main-container { max-width: 900px; margin: 2rem auto; } 
+                    .log-list-item { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #dddbda; }
+                    .log-info { display: flex; gap: 20px; }
+                </style>
             </head>
             <body class="slds-scope">
                 <div class="main-container slds-card slds-p-around_medium">
                     <h2 class="slds-text-heading_medium slds-m-bottom_large">ログファイル一覧 (${LOG_DIR})</h2>
-                    <ul class="slds-list_dotted">
+                    <ul class="slds-list_vertical slds-m-bottom_large">
+                        <li class="log-list-item slds-text-title_bold">
+                            <div>ファイル名</div>
+                            <div class="log-info">
+                                <div style="width: 120px; text-align: right;">サイズ</div>
+                                <div style="width: 200px;">最終更新日時</div>
+                            </div>
+                        </li>
         `;
-        
-        if (logFiles.length === 0) {
-            html += `<li>ファイルが見つかりません。</li>`;
+if (logFiles.length === 0) {
+            html += `<li class="log-list-item">ファイルが見つかりません。</li>`;
         } else {
             logFiles.forEach(file => {
-                const filePath = path.join(LOG_DIR, file);
-                const stats = fs.statSync(filePath);
-                
+                const fileSizeKB = (file.size / 1024).toFixed(1); // KB表示
                 html += `
-                    <li class="slds-m-bottom_x-small">
-                        <a href="/log/${file}" class="slds-text-link">${file}</a> 
-                        <span class="slds-text-color_weak slds-m-left_small">(${stats.size} bytes)</span>
+                    <li class="log-list-item">
+                        <a href="/log/${file.name}" class="slds-text-link">${file.name}</a> 
+                        <div class="log-info">
+                            <div style="width: 120px; text-align: right;">${fileSizeKB} KB</div>
+                            <div style="width: 200px;">${file.modifiedTime}</div>
+                        </div>
                     </li>
                 `;
             });
@@ -208,7 +238,7 @@ app.get('/log/:filename', (req, res) => {
                     <h2 class="slds-text-heading_medium slds-m-bottom_large">${filename}</h2>
                     <pre class="log-content">${content}</pre>
                     <div class="slds-m-top_large">
-                        <a href="/dir" class="slds-button slds-button_neutral">ログ一覧に戻る</a>
+                        <a href="/logs" class="slds-button slds-button_neutral">ログ一覧に戻る</a>
                     </div>
                 </div>
             </body>
