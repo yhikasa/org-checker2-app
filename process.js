@@ -92,6 +92,10 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                         const switchLinkSelector = 'a.switch-to-lightning';
                         
                         try {
+                           // まず要素がDOMに存在することを確認
+                            logResult(jobId, 'Waiting: switch link');
+                            await driver.wait(until.elementLocated(By.css(switchLinkSelector)), 10000);
+                            logResult(jobId, 'found: switch link');
                             const switchLink = await driver.findElement(By.css(switchLinkSelector));
                             await switchLink.click();
                             

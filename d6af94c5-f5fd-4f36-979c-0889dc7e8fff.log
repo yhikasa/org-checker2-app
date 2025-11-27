@@ -1,9 +1,0 @@
-START TIME: 2025/11/14 15:00:50 (JST)
---- PROCESS LIST --- 
-admin@afs201jp.25091701.com
-salesforce1
---- RESULT LIST ---
-RESULT: admin@afs201jp.25091701.com -> SUCCESS ✅ ログイン成功
---- PROCESS COMPLETED ---
-END TIME: 2025/11/14 15:00:55(JST)
-DURATION: 4.81 seconds
