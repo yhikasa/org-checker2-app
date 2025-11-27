@@ -85,7 +85,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                     
                     // URLに 'home.jsp' が含まれているか（Classic画面であるか）を確認
                     if (currentUrl.includes('home.jsp')) {
-                        resultStatus += '(Classic画面)';
+                        resultStatus += '(Classic画面';
                         console.log(`[Worker - ${jobId}] : classic画面のようです`);
                         
                         // 💡 ステップ 2: 「Lightning Experience に切り替え」リンクの探索とクリック
@@ -102,10 +102,10 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                             // 💡 ステップ 3: Lightning URLに遷移が完了するまで待機 (最大15秒)
                             await driver.wait(until.urlContains('lightning'), 15000); 
                             console.log(`[Worker - ${jobId}] : LEXへの切り替え完了！`);
-                            resultStatus += ' → LEXに切り替えました';
+                            resultStatus += ' → LEXに切り替えました)';
                         } catch (linkError) {
                             // リンクが見つからない、またはクリックに失敗した場合は処理を続行
-                            resultStatus += ' LEX への切り替えリンクがみつかりませんでした';
+                            resultStatus += ' → LEX への切り替えリンクがみつかりませんでした)';
                             console.log(`[Worker - ${jobId}] : LEXへの切り替えリンクが見つからず`);
                         }
                     }
