@@ -79,35 +79,33 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                 resultMessage = 'ログイン成功';
                 successCounter++;
                 // ログイン成功判定 (urlMatches(/lightning|home\.jsp/i) が true の後)
-                if (resultStatus === 'SUCCESS ✅') {
-                    // 💡 ステップ 1: 現在のURLを確認
-                    const currentUrl = await driver.getCurrentUrl();
+                // 💡 ステップ 1: 現在のURLを確認
+                const currentUrl = await driver.getCurrentUrl();
+                
+                // URLに 'home.jsp' が含まれているか（Classic画面であるか）を確認
+                if (currentUrl.includes('home.jsp')) {
+                    resultMessage += '(Classic画面';
+                    console.log(`[Worker - ${jobId}] : classic画面のようです`);
                     
-                    // URLに 'home.jsp' が含まれているか（Classic画面であるか）を確認
-                    if (currentUrl.includes('home.jsp')) {
-                        resultStatus += '(Classic画面';
-                        console.log(`[Worker - ${jobId}] : classic画面のようです`);
-                        
-                        // 💡 ステップ 2: 「Lightning Experience に切り替え」リンクの探索とクリック
-                        // リンクのテキストは言語設定によって変わるため、Xpathで両方のテキストをOR条件で検索します。
-                        const switchLinkSelector = 'a.switch-to-lightning';
-                        
-                        try {
-                           // まず要素がDOMに存在することを確認
-                            await driver.wait(until.elementLocated(By.css(switchLinkSelector)), 10000);
-                            const switchLink = await driver.findElement(By.css(switchLinkSelector));
-                            await switchLink.click();
-                            console.log(`[Worker - ${jobId}] : LEXに切り替えました！`);
+                    // 💡 ステップ 2: 「Lightning Experience に切り替え」リンクの探索とクリック
+                    // リンクのテキストは言語設定によって変わるため、Xpathで両方のテキストをOR条件で検索します。
+                    const switchLinkSelector = 'a.switch-to-lightning';
+                    
+                    try {
+                        // まず要素がDOMに存在することを確認
+                        await driver.wait(until.elementLocated(By.css(switchLinkSelector)), 10000);
+                        const switchLink = await driver.findElement(By.css(switchLinkSelector));
+                        await switchLink.click();
+                        console.log(`[Worker - ${jobId}] : LEXに切り替えました！`);
 
-                            // 💡 ステップ 3: Lightning URLに遷移が完了するまで待機 (最大15秒)
-                            await driver.wait(until.urlContains('lightning'), 15000); 
-                            console.log(`[Worker - ${jobId}] : LEXへの切り替え完了！`);
-                            resultStatus += ' → LEXに切り替えました)';
-                        } catch (linkError) {
-                            // リンクが見つからない、またはクリックに失敗した場合は処理を続行
-                            resultStatus += ' → LEX への切り替えリンクがみつかりませんでした)';
-                            console.log(`[Worker - ${jobId}] : LEXへの切り替えリンクが見つからず`);
-                        }
+                        // 💡 ステップ 3: Lightning URLに遷移が完了するまで待機 (最大15秒)
+                        await driver.wait(until.urlContains('lightning'), 15000); 
+                        console.log(`[Worker - ${jobId}] : LEXへの切り替え完了！`);
+                        resultMessage += ' → LEXに切り替えました)';
+                    } catch (linkError) {
+                        // リンクが見つからない、またはクリックに失敗した場合は処理を続行
+                        resultMessage += ' → LEX への切り替えリンクがみつかりませんでした)';
+                        console.log(`[Worker - ${jobId}] : LEXへの切り替えリンクが見つからず`);
                     }
                 }// end - ログイン成功判定-> switch to LEX
             } catch (e) {
