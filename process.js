@@ -137,9 +137,9 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
     const durationMs = endTime.getTime() - startTime.getTime();
     const durationSeconds = (durationMs / 1000).toFixed(2);
     if(failureCounter>0){
-        logResult(jobId, `\n■ 終了 : ${endTime.toLocaleString('ja-JP'), { timeZone: 'Asia/Tokyo' }} (${durationSeconds} seconds, ✅${successCounter}, ❌${failureCounter})`);
+        logResult(jobId, `\n■ 終了 : ${endTime.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })} (${durationSeconds} seconds, ✅${successCounter}, ❌${failureCounter})`);
     }else{
-        logResult(jobId, `\n■ 終了 : ${endTime.toLocaleString('ja-JP'), { timeZone: 'Asia/Tokyo' }} (${durationSeconds} seconds, ✅${successCounter})`);
+        logResult(jobId, `\n■ 終了 : ${endTime.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })} (${durationSeconds} seconds, ✅${successCounter})`);
     }
     // logResult(jobId, `END TIME: ${endTime.toLocaleString('ja-JP')}(JST)`);
     // logResult(jobId, `DURATION: ${durationSeconds} seconds`);
