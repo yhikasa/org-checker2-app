@@ -85,7 +85,8 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                     
                     // URLに 'home.jsp' が含まれているか（Classic画面であるか）を確認
                     if (currentUrl.includes('home.jsp')) {
-                        logResult(jobId, 'ACTION: Detected Salesforce Classic screen (home.jsp). Attempting to switch to Lightning Experience.');
+                        resultStatus += '(Classic画面)';
+                        console.log(`[Worker - ${jobId}] : classic画面のようです`);
                         
                         // 💡 ステップ 2: 「Lightning Experience に切り替え」リンクの探索とクリック
                         // リンクのテキストは言語設定によって変わるため、Xpathで両方のテキストをOR条件で検索します。
@@ -93,21 +94,19 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                         
                         try {
                            // まず要素がDOMに存在することを確認
-                            logResult(jobId, 'Waiting: switch link');
                             await driver.wait(until.elementLocated(By.css(switchLinkSelector)), 10000);
-                            logResult(jobId, 'found: switch link');
                             const switchLink = await driver.findElement(By.css(switchLinkSelector));
                             await switchLink.click();
-                            
-                            logResult(jobId, 'ACTION: Successfully clicked "Switch to Lightning Experience". Waiting for Lightning URL...');
+                            console.log(`[Worker - ${jobId}] : LEXに切り替えました！`);
 
                             // 💡 ステップ 3: Lightning URLに遷移が完了するまで待機 (最大15秒)
                             await driver.wait(until.urlContains('lightning'), 15000); 
-                            logResult(jobId, 'ACTION: Successfully transitioned to Lightning Experience.');
-                            
+                            console.log(`[Worker - ${jobId}] : LEXへの切り替え完了！`);
+                            resultStatus += ' → LEXに切り替えました';
                         } catch (linkError) {
                             // リンクが見つからない、またはクリックに失敗した場合は処理を続行
-                            logResult(jobId, `WARNING: Could not find or click Switch to Lightning link. Continuing on Classic. Error: ${linkError.message}`);
+                            resultStatus += ' LEX への切り替えリンクがみつかりませんでした';
+                            console.log(`[Worker - ${jobId}] : LEXへの切り替えリンクが見つからず`);
                         }
                     }
                 }// end - ログイン成功判定-> switch to LEX
