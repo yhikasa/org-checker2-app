@@ -99,6 +99,40 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
             }
             logResult(jobId, `${username} -> ${resultStatus} ${resultMessage}`);
         }
+
+        
+        // ログイン成功判定 (urlMatches(/lightning|home\.jsp/i) が true の後)
+        if (resultStatus === 'SUCCESS') {
+            // 💡 ステップ 1: 現在のURLを確認
+            const currentUrl = await driver.getCurrentUrl();
+            
+            // URLに 'home.jsp' が含まれているか（Classic画面であるか）を確認
+            if (currentUrl.includes('home.jsp')) {
+                logResult(jobId, 'ACTION: Detected Salesforce Classic screen (home.jsp). Attempting to switch to Lightning Experience.');
+                
+                // 💡 ステップ 2: 「Lightning Experience に切り替え」リンクの探索とクリック
+                // リンクのテキストは言語設定によって変わるため、Xpathで両方のテキストをOR条件で検索します。
+                const switchLinkXpath = 
+                    "//a[contains(@class, 'switch-to-lightning') and (" +
+                    "contains(text(), 'Lightning Experience に切り替え') or " +
+                    "contains(text(), 'Switch to Lightning Experience'))]";
+
+                try {
+                    const switchLink = await driver.findElement(By.xpath(switchLinkXpath));
+                    await switchLink.click();
+                    
+                    logResult(jobId, 'ACTION: Successfully clicked "Switch to Lightning Experience". Waiting for Lightning URL...');
+
+                    // 💡 ステップ 3: Lightning URLに遷移が完了するまで待機 (最大15秒)
+                    await driver.wait(until.urlContains('lightning'), 15000); 
+                    logResult(jobId, 'ACTION: Successfully transitioned to Lightning Experience.');
+                    
+                } catch (linkError) {
+                    // リンクが見つからない、またはクリックに失敗した場合は処理を続行
+                    logResult(jobId, `WARNING: Could not find or click Switch to Lightning link. Continuing on Classic. Error: ${linkError.message}`);
+                }
+            }
+        }
     }
     const endTime = new Date();
     const startTime = new Date(startTimeIso);
