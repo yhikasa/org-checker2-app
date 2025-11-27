@@ -102,7 +102,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
 
         
         // ログイン成功判定 (urlMatches(/lightning|home\.jsp/i) が true の後)
-        if (resultStatus === 'SUCCESS') {
+        if (resultStatus === 'SUCCESS ✅') {
             // 💡 ステップ 1: 現在のURLを確認
             const currentUrl = await driver.getCurrentUrl();
             
