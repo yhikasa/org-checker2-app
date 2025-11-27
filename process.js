@@ -84,7 +84,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                 
                 // URLに 'home.jsp' が含まれているか（Classic画面であるか）を確認
                 if (currentUrl.includes('home.jsp')) {
-                    resultMessage += '(Classic画面';
+                    resultMessage += ' (Classic画面';
                     console.log(`[Worker - ${jobId}] : classic画面のようです`);
                     
                     // 💡 ステップ 2: 「Lightning Experience に切り替え」リンクの探索とクリック
