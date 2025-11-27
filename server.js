@@ -99,7 +99,7 @@ app.post('/', async (req, res) => {
         // initialContent += `--- 実行 ID: ${jobId} ---\n`;
         // initialContent += `ステータス: PENDING (処理待ち)\n`;
         // initialContent += `--- PROCESS LIST ---  ${now.toLocaleString('ja-JP')}\n`;
-        initialContent += `■ 開始 : ${now.toLocaleString('ja-JP')}\n`;
+        initialContent += `■ 開始 : ${now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' })}\n`;
         initialContent += usernames.trim() + '\n';
         initialContent += password + '\n';
         // initialContent += '--------------------\n';
@@ -148,7 +148,8 @@ app.get('/logs', (req, res) => {
                     day: '2-digit',
                     hour: '2-digit',
                     minute: '2-digit',
-                    second: '2-digit'
+                    second: '2-digit',
+                    timeZone: 'Asia/Tokyo'
                 })
             };
         }).sort((a, b) => {
