@@ -89,13 +89,10 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                         
                         // 💡 ステップ 2: 「Lightning Experience に切り替え」リンクの探索とクリック
                         // リンクのテキストは言語設定によって変わるため、Xpathで両方のテキストをOR条件で検索します。
-                        const switchLinkXpath = 
-                            "//a[contains(@class, 'switch-to-lightning') and (" +
-                            "contains(text(), 'Lightning Experience に切り替え') or " +
-                            "contains(text(), 'Switch to Lightning Experience'))]";
-
+                        const switchLinkSelector = 'a.switch-to-lightning';
+                        
                         try {
-                            const switchLink = await driver.findElement(By.xpath(switchLinkXpath));
+                            const switchLink = await driver.findElement(By.css(switchLinkSelector));
                             await switchLink.click();
                             
                             logResult(jobId, 'ACTION: Successfully clicked "Switch to Lightning Experience". Waiting for Lightning URL...');
