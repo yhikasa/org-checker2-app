@@ -73,7 +73,8 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
             await driver.findElement(By.id('Login')).click();
 
             try {
-                await driver.wait(until.urlContains('lightning'), 15000); // 待機
+                // await driver.wait(until.urlContains('lightning'), 15000); // 待機
+                await driver.wait(until.urlMatches(/lightning|home\.jsp/i), 15000); // 待機
                 resultStatus = 'SUCCESS ✅';
                 resultMessage = 'ログイン成功';
                 successCounter++;
