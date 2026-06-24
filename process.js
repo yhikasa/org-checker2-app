@@ -32,7 +32,7 @@ async function saveScreenshot(driver, logDir, jobId, userCleanName, suffix) {
 }
 
 // メインのログインテスト処理
-async function executeLoginTest(jobId, usernames, password, startTimeIso) {
+async function executeLoginTest(jobId, usernames, password, startTimeIso, isSandbox, isDebug) {
     // logResult(jobId, '--- RESULT LIST ---');
     logResult(jobId, '\n■ 結果');
 
@@ -63,6 +63,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
             options.addArguments('--headless=new'); // GUIなしのヘッドレスモード
             options.addArguments('--no-sandbox');
             options.addArguments('--disable-dev-shm-usage');
+            options.addArguments('--window-size=1920,1080');
 
             // 環境変数が設定されていない場合、ローカル環境と判断する
             // Heroku環境では通常、'production'や'staging'などのNODE_ENVが設定されています
