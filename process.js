@@ -32,9 +32,17 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
         let resultStatus = 'ERROR';
         let resultMessage = 'システムエラー';
 
-        // 💡 修正: ユーザー名から安全なファイル用識別子を作成 (例: admin@example.com -> admin)
-        const userCleanName = username.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '');
-        const screenshotName = `${jobId}-${userCleanName}.png`;
+        // 💡 修正: @以降、かつ最後のドット(.comなど)より前の部分を抽出してユニークにする
+        // 例: admin@dex6022.55726.com -> dex6022.55726
+        let domainPart = '';
+        const match = username.match(/@([^@]+)\.[^.]+$/);
+        if (match && match[1]) {
+            domainPart = match[1].replace(/[^a-zA-Z0-9.-]/g, ''); // ドット(.)も含めて許可
+        } else {
+            // 万が一うまく切り出せなかった場合のセーフティ
+            domainPart = username.replace(/[^a-zA-Z0-9_-]/g, '');
+        }
+        const screenshotName = `${jobId}-${domainPart}.png`;
 
         try {
             // Herokuなどの環境で実行するためのChromeオプション
@@ -147,7 +155,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                     // スキップ
                 }
             }
-            
+
             resultStatus = 'ERROR 🛑';
             resultMessage = `Workerエラー: ${error.message}`;
             failureCounter++;
