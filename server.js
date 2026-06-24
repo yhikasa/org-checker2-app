@@ -199,7 +199,7 @@ if (logFiles.length === 0) {
                 const icon = file.isImage ? '🖼️ ' : '📄 ';                
                 html += `
                     <li class="log-list-item">
-                        <a href="/log/${file.name}" class="slds-text-link">${file.name}</a> 
+                        <a href="${linkUrl}" class="slds-text-link" ${file.isImage ? 'target="_blank"' : ''}>${icon}${file.name}</a>
                         <div class="log-info">
                             <div style="width: 120px; text-align: right;">${fileSizeKB} KB</div>
                             <div style="width: 200px;">${file.modifiedTime}</div>

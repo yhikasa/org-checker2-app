@@ -32,6 +32,10 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
         let resultStatus = 'ERROR';
         let resultMessage = 'システムエラー';
 
+        // 💡 修正: ユーザー名から安全なファイル用識別子を作成 (例: admin@example.com -> admin)
+        const userCleanName = username.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '');
+        const screenshotName = `${jobId}-${userCleanName}.png`;
+
         try {
             // Herokuなどの環境で実行するためのChromeオプション
             let options = new chrome.Options();
@@ -116,7 +120,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                 if (driver) {
                     const screenshot = await driver.takeScreenshot();
                     // 💡 画像の保存先も LOG_DIR 配下にする
-                    const screenshotPath = path.join(LOG_DIR, `${jobId}.png`);
+                    const screenshotPath = path.join(LOG_DIR, screenshotName);
                     fs.writeFileSync(screenshotPath, screenshot, 'base64');
                     console.log(`[Worker - ${jobId}] Error Screenshot saved to ${screenshotPath}`);
                 }
@@ -132,6 +136,18 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                 failureCounter++;
             }
         } catch (error) {
+
+            if (driver) {
+                try {
+                    const screenshot = await driver.takeScreenshot();
+                    const screenshotPath = path.join(LOG_DIR, screenshotName);
+                    fs.writeFileSync(screenshotPath, screenshot, 'base64');
+                    console.log(`[Worker - ${jobId}] Critical Error Screenshot saved.`);
+                } catch (screenshotError) {
+                    // スキップ
+                }
+            }
+            
             resultStatus = 'ERROR 🛑';
             resultMessage = `Workerエラー: ${error.message}`;
             failureCounter++;
