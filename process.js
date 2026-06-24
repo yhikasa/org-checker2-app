@@ -4,11 +4,14 @@ const path = require('path');
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 
-const SF_LOGIN_URL = 'https://login.salesforce.com/';
+// 💡 修正: ログファイル・画像の保存先を「logs」フォルダ配下に指定
+const LOG_DIR = path.join(__dirname, 'logs');
+
+const SF_LOGIN_URL = 'https://login.salesforce.com/?type=twobox&login=1';
 
 // ログファイルへの追記関数
 function logResult(jobId, message) {
-    const logFilePath = path.join(__dirname, `${jobId}.log`);
+    const logFilePath = path.join(LOG_DIR, `${jobId}.log`);
     fs.appendFileSync(logFilePath, message + '\n');
     console.log(`[Worker - ${jobId}] LOGGED: ${message}`);
 }
@@ -32,7 +35,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
         try {
             // Herokuなどの環境で実行するためのChromeオプション
             let options = new chrome.Options();
-            options.addArguments('--headless'); // GUIなしのヘッドレスモード
+            options.addArguments('--headless=new'); // GUIなしのヘッドレスモード
             options.addArguments('--no-sandbox');
             options.addArguments('--disable-dev-shm-usage');
 
@@ -109,6 +112,15 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                     }
                 }// end - ログイン成功判定-> switch to LEX
             } catch (e) {
+
+                if (driver) {
+                    const screenshot = await driver.takeScreenshot();
+                    // 💡 画像の保存先も LOG_DIR 配下にする
+                    const screenshotPath = path.join(LOG_DIR, `${jobId}.png`);
+                    fs.writeFileSync(screenshotPath, screenshot, 'base64');
+                    console.log(`[Worker - ${jobId}] Error Screenshot saved to ${screenshotPath}`);
+                }
+
                 const errorElement = await driver.findElements(By.id('error'));
                 if (errorElement.length > 0) {
                     resultStatus = 'FAILURE ❌';

@@ -6,13 +6,19 @@ const { v4: uuidv4 } = require('uuid'); // ユニークID生成ライブラリ
 const { fork } = require('child_process'); // Workerプロセス起動用
 const archiver = require('archiver'); // 💡 archiver をインポート
 
-const LOG_DIR = __dirname; // ログファイルをプロジェクトルートに保存
+// 💡 修正: ログと画像の出力先を「logs」フォルダに統一（なければ自動作成）
+const LOG_DIR = path.join(__dirname, 'logs'); 
+if (!fs.existsSync(LOG_DIR)){
+    fs.mkdirSync(LOG_DIR);
+}
+
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SF_LOGIN_URL = 'https://login.salesforce.com/';
+// https://test.salesforce.com/?type=twobox&login=1
+const SF_LOGIN_URL = 'https://login.salesforce.com/?type=twobox&login=1';
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public')); // 必要に応じて静的ファイル用フォルダ
@@ -132,15 +138,16 @@ app.get('/logs', (req, res) => {
         // __dirname にあるファイルを取得
         const files = fs.readdirSync(LOG_DIR);
         
-        // 拡張子が .log または .PROCESS_LIST のファイルのみをフィルタリング
+        // 拡張子が .log または .png のファイルのみをフィルタリング
         const logFiles = files.filter(file => 
-            file.endsWith('.log')
-).map(file => {
+            file.endsWith('.log') || file.endsWith('.png')
+        ).map(file => {
             const filePath = path.join(LOG_DIR, file);
             const stats = fs.statSync(filePath);
             return {
                 name: file,
                 size: stats.size,
+                isImage: file.endsWith('.png'),
                 // 最終更新日時 (Modification Time) を取得し、読みやすい形式に整形
                 modifiedTime: stats.mtime.toLocaleString('ja-JP', {
                     year: 'numeric',
@@ -187,6 +194,9 @@ if (logFiles.length === 0) {
         } else {
             logFiles.forEach(file => {
                 const fileSizeKB = (file.size / 1024).toFixed(1); // KB表示
+                // 画像なら /view-img/:filename へ、ログなら /log/:filename へリンク
+                const linkUrl = file.isImage ? `/view-img/${file.name}` : `/log/${file.name}`;
+                const icon = file.isImage ? '🖼️ ' : '📄 ';                
                 html += `
                     <li class="log-list-item">
                         <a href="/log/${file.name}" class="slds-text-link">${file.name}</a> 
@@ -254,6 +264,17 @@ app.get('/log/:filename', (req, res) => {
     }
 });
 
+// --- 新規追加: エラー画像を表示するルート (GET /view-img/:filename) ---
+app.get('/view-img/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(LOG_DIR, filename);
+
+    if (filename.includes('..') || !fs.existsSync(filePath) || !filename.endsWith('.png')) {
+        return res.status(404).send('画像が見つかりません。');
+    }
+    // 画像ファイルをそのままレスポンスとして返す
+    res.sendFile(filePath);
+});
 
 // --- 新規追加: 全ログファイルの ZIP ダウンロードルート (GET /download-logs) ---
 app.get('/download-logs', (req, res) => {
