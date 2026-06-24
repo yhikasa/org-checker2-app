@@ -18,11 +18,11 @@ function logResult(jobId, message) {
 }
 
 // 共通のスクリーンショット撮影・保存関数
-async function saveScreenshot(driver, logDir, jobId, userCleanName, suffix) {
+async function saveScreenshot(driver, logDir, jobId, userDomainName, suffix) {
     if (driver) {
         try {
             const screenshot = await driver.takeScreenshot();
-            const screenshotPath = path.join(logDir, `${jobId}-${userCleanName}-${suffix}.png`);
+            const screenshotPath = path.join(logDir, `${jobId}-${userDomainName}-${suffix}.png`);
             fs.writeFileSync(screenshotPath, screenshot, 'base64');
             console.log(`[Worker - ${jobId}] Screenshot saved: ${screenshotPath}`);
         } catch (err) {
@@ -55,7 +55,14 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso, isSand
         let resultStatus = 'ERROR';
         let resultMessage = 'システムエラー';
 
-        const userCleanName = username.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '');
+        // 変数名はそのままに、中身だけ@〜最後のドットまでに変更する荒技
+        let userDomainName = '';
+        const match = username.match(/@(.+)\.[^.]+$/);
+        if (match && match[1]) {
+            userDomainName = match[1].replace(/[^a-zA-Z0-9.-]/g, '');
+        } else {
+            userDomainName = username.replace(/[^a-zA-Z0-9_-]/g, '');
+        }
 
         try {
             // Herokuなどの環境で実行するためのChromeオプション
@@ -99,7 +106,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso, isSand
 
             // 💡 debug=true の場合、ログインURLを開いた直後の「ログイン初期画面」を撮影
             if (isDebug === 'true') {
-                await saveScreenshot(driver, LOG_DIR, jobId, userCleanName, '01_login_page');
+                await saveScreenshot(driver, LOG_DIR, jobId, userDomainName, '01_login_page');
             }
 
             // ユーザー名とパスワードを入力
@@ -116,7 +123,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso, isSand
 
                 // 💡 debug=true であればログイン成功時の画面を撮影
                 if (isDebug === 'true') {
-                    await saveScreenshot(driver, LOG_DIR, jobId, userCleanName, '02_success_page');
+                    await saveScreenshot(driver, LOG_DIR, jobId, userDomainName, '02_success_page');
                 }
 
                 // ログイン成功判定 (urlMatches(/lightning|home\.jsp/i) が true の後)
@@ -150,7 +157,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso, isSand
                     }
                 }// end - ログイン成功判定-> switch to LEX
             } catch (e) {
-                await saveScreenshot(driver, LOG_DIR, jobId, userCleanName, 'error');
+                await saveScreenshot(driver, LOG_DIR, jobId, userDomainName, 'error');
                 
                 const errorElement = await driver.findElements(By.id('error'));
                 if (errorElement.length > 0) {
@@ -163,7 +170,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso, isSand
                 failureCounter++;
             }
         } catch (error) {
-            await saveScreenshot(driver, LOG_DIR, jobId, userCleanName, 'critical_error');
+            await saveScreenshot(driver, LOG_DIR, jobId, userDomainName, 'critical_error');
             
             resultStatus = 'ERROR 🛑';
             resultMessage = `Workerエラー: ${error.message}`;
