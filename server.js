@@ -24,9 +24,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public')); // 必要に応じて静的ファイル用フォルダ
 
 // HTMLテンプレートを読み込む関数
-//function renderHtml(results = '', lastUsernames = '', lastPassword = '') {
 // 修正 : showForm 引数 (デフォルトは true) を追加
-function renderHtml(results = '', lastUsernames = '', lastPassword = '', showForm = true) {    // index.html ファイルを読み込む
+// 修正: 引数の最後に formActionQuery = '' を追加
+function renderHtml(results = '', lastUsernames = '', lastPassword = '', showForm = true, formActionQuery = '') {    
     let htmlContent;
     if(showForm==true){
         htmlContent = fs.readFileSync('./index.html', 'utf8');
@@ -38,6 +38,10 @@ function renderHtml(results = '', lastUsernames = '', lastPassword = '', showFor
         
         // 修正 2: フォーム表示フラグを HTML に渡す
         htmlContent = htmlContent.replace('{{ showForm }}', showForm ? '' : 'none');
+        
+        // 修正: フォームの送信先URLの末尾にパラメータを動的に埋め込む
+        // HTML側の <form action="/{{ formActionQuery }}" ...> を置換します
+        htmlContent = htmlContent.replace('{{ formActionQuery }}', formActionQuery);
     }else{
         htmlContent = fs.readFileSync('./result.html', 'utf8');
         // プレースホルダーを置換
@@ -49,8 +53,12 @@ function renderHtml(results = '', lastUsernames = '', lastPassword = '', showFor
 
 // ルートページ (GET)
 app.get('/', (req, res) => {
-    // 初回アクセス時は空の値を設定
-    res.send(renderHtml());
+    // URLパラメータ（クエリ）をそのまま引き継ぐ文字列を作成
+    // 例: ?sandbox=true&debug=true 
+    const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+    // 生成したクエリ文字列を含めてHTMLをレンダリング
+    // (引数の順番を合わせるため、後ろに queryString を追加)
+    res.send(renderHtml('', '', '', true, queryString));
 });
 
 // 結果表示ページ (GET /results/:jobId) - 2回目以降のアクセスはこちら
@@ -115,9 +123,15 @@ app.post('/', async (req, res) => {
         // Web Dyno の処理中に同期的にファイルを書き込みます
         fs.writeFileSync(logFilePath, initialContent);
         
+        // フォームまたはURLクエリからパラメータを取得 (値が 'true' なら true フラグを立てる)
+        const isSandbox = req.body.sandbox === 'true' || req.query.sandbox === 'true' ? 'true' : 'false';
+        const isDebug = req.body.debug === 'true' || req.query.debug === 'true' ? 'true' : 'false';
+
+        console.log(`[Web] Params - Sandbox: ${isSandbox}, Debug: ${isDebug}`);
         console.log(`[Web] Initialized log file for Job ID: ${jobId}`);    // 2. Workerプロセスをフォークして非同期処理を開始 (H12回避)
         // Workerプロセスに jobId, usernames, password を引数として渡す
-        const workerProcess = fork('process.js', [jobId, usernames, password, now.toISOString()]);
+        // 引数の末尾に isSandbox と isDebug を追加
+        const workerProcess = fork('process.js', [jobId, usernames, password, now.toISOString(), isSandbox, isDebug]);
 
         workerProcess.on('error', (err) => {
             console.error(`Worker Process Error for ${jobId}:`, err);

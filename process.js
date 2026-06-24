@@ -4,10 +4,11 @@ const path = require('path');
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 
-// 💡 修正: ログファイル・画像の保存先を「logs」フォルダ配下に指定
+// ログファイル・画像の保存先を「logs」フォルダ配下に指定
 const LOG_DIR = path.join(__dirname, 'logs');
 
 const SF_LOGIN_URL = 'https://login.salesforce.com/?type=twobox&login=1';
+const SB_LOGIN_URL = 'https://test.salesforce.com/?type=twobox&login=1';
 
 // ログファイルへの追記関数
 function logResult(jobId, message) {
@@ -16,10 +17,32 @@ function logResult(jobId, message) {
     console.log(`[Worker - ${jobId}] LOGGED: ${message}`);
 }
 
+// 共通のスクリーンショット撮影・保存関数
+async function saveScreenshot(driver, logDir, jobId, userCleanName, suffix) {
+    if (driver) {
+        try {
+            const screenshot = await driver.takeScreenshot();
+            const screenshotPath = path.join(logDir, `${jobId}-${userCleanName}-${suffix}.png`);
+            fs.writeFileSync(screenshotPath, screenshot, 'base64');
+            console.log(`[Worker - ${jobId}] Screenshot saved: ${screenshotPath}`);
+        } catch (err) {
+            console.error(`[Worker - ${jobId}] Failed to take screenshot (${suffix}):`, err.message);
+        }
+    }
+}
+
 // メインのログインテスト処理
 async function executeLoginTest(jobId, usernames, password, startTimeIso) {
     // logResult(jobId, '--- RESULT LIST ---');
     logResult(jobId, '\n■ 結果');
+
+    // sandbox パラメータによってログインURLを切り替える
+    // 本番（またはパラメータ付きの従来の挙動）か、Sandbox（test.salesforce.com）か
+    let loginUrl = SF_LOGIN_URL;
+    if (isSandbox === 'true') {
+        loginUrl = SB_LOGIN_URL;
+    }    
+    logResult(jobId, `検証URL: ${loginUrl} (DebugMode: ${isDebug === 'true' ? 'ON' : 'OFF'})`);    
     
     const userList = usernames.split('\n').map(u => u.trim()).filter(u => u.length > 0);
     
@@ -32,17 +55,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
         let resultStatus = 'ERROR';
         let resultMessage = 'システムエラー';
 
-        // 💡 修正: @以降、かつ最後のドット(.comなど)より前の部分を抽出してユニークにする
-        // 例: admin@dex6022.55726.com -> dex6022.55726
-        let domainPart = '';
-        const match = username.match(/@([^@]+)\.[^.]+$/);
-        if (match && match[1]) {
-            domainPart = match[1].replace(/[^a-zA-Z0-9.-]/g, ''); // ドット(.)も含めて許可
-        } else {
-            // 万が一うまく切り出せなかった場合のセーフティ
-            domainPart = username.replace(/[^a-zA-Z0-9_-]/g, '');
-        }
-        const screenshotName = `${jobId}-${domainPart}.png`;
+        const userCleanName = username.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '');
 
         try {
             // Herokuなどの環境で実行するためのChromeオプション
@@ -81,7 +94,13 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
             
             driver = await builder.build();
 
-            await driver.get(SF_LOGIN_URL); 
+            await driver.get(loginUrl); 
+
+            // 💡 debug=true の場合、ログインURLを開いた直後の「ログイン初期画面」を撮影
+            if (isDebug === 'true') {
+                await saveScreenshot(driver, LOG_DIR, jobId, userCleanName, '01_login_page');
+            }
+
             // ユーザー名とパスワードを入力
             await driver.findElement(By.id('username')).sendKeys(username);
             await driver.findElement(By.id('password')).sendKeys(password);
@@ -93,6 +112,12 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                 resultStatus = 'SUCCESS ✅';
                 resultMessage = 'ログイン成功';
                 successCounter++;
+
+                // 💡 debug=true であればログイン成功時の画面を撮影
+                if (isDebug === 'true') {
+                    await saveScreenshot(driver, LOG_DIR, jobId, userCleanName, '02_success_page');
+                }
+
                 // ログイン成功判定 (urlMatches(/lightning|home\.jsp/i) が true の後)
                 // 💡 ステップ 1: 現在のURLを確認
                 const currentUrl = await driver.getCurrentUrl();
@@ -124,15 +149,8 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                     }
                 }// end - ログイン成功判定-> switch to LEX
             } catch (e) {
-
-                if (driver) {
-                    const screenshot = await driver.takeScreenshot();
-                    // 💡 画像の保存先も LOG_DIR 配下にする
-                    const screenshotPath = path.join(LOG_DIR, screenshotName);
-                    fs.writeFileSync(screenshotPath, screenshot, 'base64');
-                    console.log(`[Worker - ${jobId}] Error Screenshot saved to ${screenshotPath}`);
-                }
-
+                await saveScreenshot(driver, LOG_DIR, jobId, userCleanName, 'error');
+                
                 const errorElement = await driver.findElements(By.id('error'));
                 if (errorElement.length > 0) {
                     resultStatus = 'FAILURE ❌';
@@ -144,18 +162,8 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
                 failureCounter++;
             }
         } catch (error) {
-
-            if (driver) {
-                try {
-                    const screenshot = await driver.takeScreenshot();
-                    const screenshotPath = path.join(LOG_DIR, screenshotName);
-                    fs.writeFileSync(screenshotPath, screenshot, 'base64');
-                    console.log(`[Worker - ${jobId}] Critical Error Screenshot saved.`);
-                } catch (screenshotError) {
-                    // スキップ
-                }
-            }
-
+            await saveScreenshot(driver, LOG_DIR, jobId, userCleanName, 'critical_error');
+            
             resultStatus = 'ERROR 🛑';
             resultMessage = `Workerエラー: ${error.message}`;
             failureCounter++;
@@ -183,10 +191,12 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso) {
 }
 
 // Node.jsの子プロセスとして実行される
-if (process.argv.length > 5) {
+if (process.argv.length > 7) {
     const jobId = process.argv[2];
     const usernames = process.argv[3];
     const password = process.argv[4];
     const startTimeIso = process.argv[5]; // 開始日時（ISO形式）
-    executeLoginTest(jobId, usernames, password, startTimeIso);
+    const isSandbox = process.argv[6]; // 💡 追加
+    const isDebug = process.argv[7];   // 💡 追加
+    executeLoginTest(jobId, usernames, password, startTimeIso, isSandbox, isDebug);
 }
