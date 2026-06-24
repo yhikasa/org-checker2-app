@@ -8,8 +8,8 @@ const chrome = require('selenium-webdriver/chrome');
 const LOG_DIR = path.join(__dirname, 'logs');
 
 const SF_LOGIN_URL = 'https://login.salesforce.com/?type=twobox&login=1';
-//const SB_LOGIN_URL = 'https://test.salesforce.com/?type=twobox&login=1';
-const SB_LOGIN_URL = 'https://test.salesforce.com/';
+const SB_LOGIN_URL = 'https://test.salesforce.com/?type=twobox&login=1';
+//const SB_LOGIN_URL = 'https://test.salesforce.com/';
 
 // ログファイルへの追記関数
 function logResult(jobId, message) {
