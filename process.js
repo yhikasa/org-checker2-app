@@ -43,7 +43,7 @@ async function executeLoginTest(jobId, usernames, password, startTimeIso, isSand
     if (isSandbox === 'true') {
         loginUrl = SB_LOGIN_URL;
     }    
-    logResult(jobId, `検証URL: ${loginUrl} ${isDebug === 'true' ? 'Debugモード' : ''})`);    
+    logResult(jobId, `検証URL: ${loginUrl} ${isDebug === 'true' ? 'Debugモード' : ''}`);    
     
     const userList = usernames.split('\n').map(u => u.trim()).filter(u => u.length > 0);
     
